@@ -1,0 +1,350 @@
+<html>
+  <head>
+    <title>XAHAU KEYS TOOL</title>
+    <link href='https://fonts.googleapis.com/css?family=Work Sans' rel='stylesheet'>
+    <style>
+       body{font-family: "Work Sans", sans-serif;padding: 20px;background: #f0d068;}
+       h1{font-weight: bold;}
+       input, button {padding: 6px;margin-bottom: 8px;}
+       button{font-weight: bold;font-family: "Work Sans", sans-serif;}
+       td{vertical-align: middle;}
+    </style>
+
+  </head>
+  
+<!-- ************************************************************** -->
+<!-- ********************** The Form ****************************** -->
+<!-- ************************************************************** -->
+
+  <body>
+    <h1>XAHAU KEYS TOOL</h1>
+    <table>
+    <button class="btn mb-3 btn-dark" style="display: block" id="sub">
+      Account: ... waiting sign in ...
+    </button>
+    <p></p>
+    <button class="btn mb-3 btn-dark" id="auth" style="display: block">
+      Click to sign in
+    </button>
+    <button class="btn mb-3 btn-warning" style="display: none" id="logout">
+      Logout
+    </button>
+    <p></p>
+  </table>
+
+    <h1>GET NEW KEY PAIR</h1>
+      <button type="button" id="getKeyPairTestnet">Get new funded Testnet key pair</button>
+      &nbsp;&nbsp;
+      <button type="button" id="getKeyPairMainnet">Get new Mainnet key pair (do it offline)</button>
+      <table>
+        <tr valign="top">
+          <td>
+            <table>
+              <tr valign="top">
+                <td>
+                  <table>
+                    <tr valign="top">
+                      <td align="right">
+                        Address
+                      </td>
+                      <td>
+                        <input type="text" id="standbyAccountField1" size="40"></input>
+                        <br>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="right">
+                        XAH Balance
+                      </td>
+                      <td>
+                        <input type="text" id="standbyBalanceField1" size="40"></input>
+                        <br>
+                      </td>
+                    </tr>
+                  </table>
+                  <p align="right">
+                    <textarea id="standbyResultField1" cols="80" rows="7" ></textarea>
+                  </p>
+                  <button type="button" id="clear1">Clear fields</button>
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+
+    <h1>SET REGULAR KEY</h1>
+      <table>
+        <tr valign="top">
+          <td>
+            <table>
+              <tr valign="top">
+                <td>
+                  <table>
+                    <tr valign="top">
+                      <td align="right">
+                        Account
+                      </td>
+                      <td>
+                        <input type="text" id="standbyAccountField2" size="40"></input>
+                        <br>
+                      </td>
+                    </tr>
+                   <tr>
+                      <td align="right">
+                        Regular Key (address)
+                      </td>
+                      <td>
+                        <input type="text" id="regularKeyField" size="40"></input>
+                        <br>
+                      </td>
+                    </tr>
+                  </table>
+                  <br/>
+                  <button class="btn mb-3 btn-danger" id="setRegularKey">Set Regular Key</button>
+                  <p align="right">
+                    <textarea id="standbyResultField2" cols="80" rows="10" ></textarea>
+                  </p>
+                  <button type="button" id="clear2">Clear fields</button>
+                </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+
+    <h1>DISABLE MASTER KEY</h1>    
+    <button
+    class="btn mb-3 btn-danger"
+    id="signrequest1"
+    >
+    Disable Master Key (this ENABLES Flag.4.asfDisableMaster)
+    </button>
+    <p></p>
+    
+    <button
+    class="btn mb-3 btn-danger"
+    id="signrequest2"
+    >
+    Enable again Master Key (this DISABLES Flag.4.asfDisableMaster)
+    </button>
+    <p></p>
+  
+    <button
+    class="btn mb-3 btn-success btn-lg"
+    id="getflags1"
+  >
+    Check asfDisableMaster flag status
+  </button>
+  <p></p>
+  <table>
+    <tr valign="top">
+      <td>
+        <p align="left">
+          <textarea
+            id="standbyResultField3"
+            cols="80"
+            rows="7"
+          ></textarea>
+        </p>
+      </td>
+    </tr>
+  </table>
+</p>
+<button type="button" id="clear3">Clear fields</button>
+</p>
+
+  <script src='xrpl-latest-min.js'></script>
+  <script src='xrpl-latest.js'></script>
+  
+  <script>
+    if (typeof module !== "undefined") {
+      const xrpl = require("@transia/xrpl")
+    }
+  </script>
+  <script type="module">
+    import "https://xumm.app/assets/cdn/xumm-oauth2-pkce.min.js?v=2.7.1";
+  
+    const xumm = new XummPkce("12e14dd5-83b3-418e-a7dc-430c434513e5", {
+      implicit: true,
+      redirectUrl: document.location.href + "?custom_state=test",
+    });
+    
+// *******************************************************
+// ************* SIGNED IN *******************************
+// *******************************************************
+    const signedIn = async () => {
+      const state = await xumm.state();
+      if (state?.me?.sub) {
+        document.getElementById("sub").innerText = "Account:  " + state.me.sub;
+        document.getElementById("auth").style.display = "none";
+        document.getElementById("logout").style.display = "block";
+      }
+    };
+      
+    document.getElementById("auth").onclick = () =>
+    xumm.authorize().catch((e) => console.log("e", e));
+    
+// *******************************************************
+// ************* Create XAHAU Testnet keypair************
+// *******************************************************
+    document.getElementById("getKeyPairTestnet").onclick = () => {
+            getKeyPairTestnet();
+          };
+
+    async function getKeyPairTestnet() {
+    const call = await window.fetch("https://xahau-test.net/newcreds", {
+    method: "POST",
+    });
+    const data = await call.json();
+    console.log(data);
+
+    standbyAccountField1.value = data.address;
+    standbyBalanceField1.value = data.xrp;
+
+    standbyResultField1.value =
+    "New account created:" +
+    "\nAddress: " +
+    data.address +
+    "\nSeed: " +
+    data.secret +
+    "\nXAH: " +
+    data.xrp +
+    "\nHash: " +
+    data.hash +
+    "\nCode: " +
+    data.code;
+}
+
+// *******************************************************
+// ************* Create XAHAU Mainnet keypair **************
+// *******************************************************
+    document.getElementById("getKeyPairMainnet").onclick = () => {
+            getKeyPairMainnet();
+          };
+
+    async function getKeyPairMainnet() {
+    const wallet = xrpl.Wallet.generate("ed25519");
+    console.log(wallet);
+
+    /*standbyResultField1.value =
+    "Creating a wallet...\n" + "Wallet created:\n" + JSON.stringify(wallet);*/
+
+    standbyResultField1.value =
+    "New account created:" +
+    "\nAddress: " +
+    wallet.address +
+    "\nSeed: " +
+    wallet.seed +
+    "\nPublic Key: " +
+    wallet.publicKey +
+    "\nPrivate Key: " +
+    wallet.privateKey;
+
+    standbyAccountField1.value = wallet.address;
+    standbyBalanceField1.value = "0";
+    } // End of getKeypairMainnet()
+
+    document.getElementById("clear1").onclick = () => {
+    window.location.reload();
+    }
+
+// *******************************************************
+// ************* Set Regular Key XAHAU *******************
+// *******************************************************
+    document.getElementById("setRegularKey").onclick = async () => {
+            const { sdk } = await xumm.state();
+            const payload = await sdk.payload.create({
+              Flags: "0",
+              TransactionType: "SetRegularKey",
+              Account: "rB5EnRh7FRnAQL6jqWu2Dif9C1b6YzNW5s",
+              RegularKey: "rGoB3VuiWboiyfXBJEryaTGrGGX9SKtA3M",
+              NetworkID: 21337
+            });
+            console.log(payload);
+            window.open(payload.next.always);
+            if (payload.pushed) {
+            window.open(payload.next.always);
+            }
+            document.getElementById("standbyResultField2").value = payload;
+            } // End of setRegularKey()
+           
+            document.getElementById("clear2").onclick = () => {
+            window.location.reload();
+            }
+
+       
+// *******************************************************
+// ************* Disable Master Key XAHAU ****************
+// *******************************************************
+
+    document.getElementById("signrequest1").onclick = async () => {
+      const { sdk } = await xumm.state();
+      const payload = await sdk.payload.create({
+              TransactionType: "AccountSet",
+              SetFlag: 4,
+            });
+            if (payload.pushed) {
+              window.open(payload.next.always);
+            }
+            };
+
+    document.getElementById("signrequest2").onclick = async () => {
+            const { sdk } = await xumm.state();
+            const payload = await sdk.payload.create({
+              TransactionType: "AccountSet",
+              ClearFlag: 4,
+            });
+            if (payload.pushed) {
+              window.open(payload.next.always);
+            }
+          };
+    
+// *******************************************************
+// ************* Check account info flags XAHAU **********
+// *******************************************************
+          document.getElementById("getflags1").onclick = async () => {
+            let network = "wss://xahau.network";
+            let NetworkID = 21337;
+    
+            const client = new xrpl.Client(network);
+            await client.connect();
+            const state = await xumm.state();
+            const wallet = state.me.sub;
+    
+            const response = await client.request({
+              command: "account_info",
+              account: wallet,
+              ledger_index: "validated",
+            });
+    
+            console.log(response);
+            document.getElementById("standbyResultField3").value =
+              "Account: " + response.result.account_data.Account + "\nFlag 4 asfDisableMaster status: " +
+              response.result.account_flags.disableMasterKey + "\nLedger Hash: " + response.result.ledger_hash + "\nLedger Index: " + response.result.ledger_index + "\nValidated: " + response.result.validated;
+          };
+
+          document.getElementById("clear3").onclick = () => {
+            window.location.reload();
+            }
+
+// *******************************************************
+// ************* LOGOUT **********************************
+// *******************************************************
+          document.getElementById("logout").onclick = () => {
+            xumm.logout();
+            document.getElementById("sub").innerText =
+              "Account: ... waiting sign in ...";
+              document.getElementById("auth").style.display = "block";
+            document.getElementById("logout").style.display = "none";
+          };
+    
+          xumm.on("error", (error) => console.log("error", error));
+          xumm.on("success", () => signedIn());
+          xumm.on("retrieved", () => signedIn());
+    
+    </script>
+  </body> 
+</html>
